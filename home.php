@@ -1,153 +1,70 @@
 <?php
-  //loeme andmebaasi login ifo muutujad
-  require("../../../../config_vp2020.php");
-  //kui kasutaja on vormis andmeid saatnud, siis salvestame andmebaasi
-  $database = "if20_karlkor";
-  if(isset($_POST["submitnonsens"])){
-	  if(!empty($_POST["nonsens"])){
-		  //andmebaasi lisamine
-		  //loome andmebaasi ühenduse
-		  $conn = new mysqli($serverhost, $serverusername, $serverpassword, $database);
-		  //valmistame ette SQL käsu
-		  $stmt = $conn->prepare("INSERT INTO nonsens (nonsensidea) VALUES(?)");
-		  echo $conn->error;
-		  //s - string, i -integer, d-decimal
-		  $stmt->bind_param("s", $_POST["nonsens"]);
-		  $stmt->execute();
-		  //käsk ja ühendus sulgeda
-		  $stmt->close();
-		  $conn->close();
-	  } 
-  }
-  
-  //loeme andmebaasist
-  $nonsenshtml = "";
-  $conn = new mysqli($serverhost, $serverusername, $serverpassword, $database);
-  //valmistame ette SQL käsu
-  $stmt = $conn->prepare("SELECT nonsensidea FROM nonsens");
-  echo $conn->error;
-  //seome tulemuse mingi muutujaga
-  $stmt->bind_result($nonsensfromdb);
-  $stmt->execute();
-  //võtan, kuni on
-  while($stmt->fetch()){
-	  //<p>suvaline mõte </p>
-	  $nonsenshtml .= "<p>" .$nonsensfromdb ."</p>";
-  }
-  $stmt->close();
-  $conn->close();
-  //ongi andmebaasisit loetud
+$username = "karlreimond";
+$fulltimenow = date("d.m.Y H:i:s");
+$hournow = date("H");
+$partofday = "lihtsalt aeg";
+if ($hournow < 7) {
+    $partofday = "uneaeg";
+}
+if ($hournow >= 8 and $hournow < 18) {
+	$partofday = "akadeemilise aktiivsuse aeg";
+}	
+if ($hournow >=11 and $hournow < 12) {
+	$partofday = "aeg lõunasöögiks";
+}
+if ($hournow > 18 and $hournow < 19) {
+	$partofday = "aeg süüa õhtusööki";
+}
+if ($hournow > 19 and $hournow < 23) {
+	$partofday = "aeg vaadata telekat, käia pesus ja üleüldse niisama olla";
+}
 
-  $username = "Andrus Rinde";
-  $fulltimenow = date("d.m.Y H:i:s");
-  $hournow = date("H");
-  $partofday = "lihtsalt aeg";
-  
-  //vaatame, mda vormist serverile saadetakse
-  var_dump($_POST);
-  
-  $weekdaynameset = ["esmaspäev", "teisipäev", "kolmapäev", "neljapäev", "reede", "laupäev", "pühapäev"];
-  $monthnameset = ["jaanuar", "veebruar", "märts", "aprill", "mai", "juuni", "juuli", "august", "september", "oktoober", "november", "detsember"];
-  
-  //küsime nädalapäeva
-  $weekdaynow = date("N");
-  //echo $weekdaynow;
-  
-  if($hournow < 6){
-	  $partofday = "uneaeg";
-  }
-  if($hournow >= 6 and $hournow < 8){
-	  $partofday = "hommikuste protseduuride aeg";
-  }
-  if($hournow >= 8 and $hournow < 18){
-	  $partofday = "akadeemilise aktiivsuse aeg";
-  }
-  if($hournow >= 18 and $hournow < 22){
-	  $partofday = "õhtuste toimetuste aeg";
-  }
-  if($hournow >= 22){
-	  $partofday = "päeva kokkuvõtte ning magamamineku aeg";
-  }
-  
-  //jälgime semestri kulgu
-  $semesterstart = new DateTime("2020-8-31");
-  $semesterend = new DateTime("2020-12-13");
-  $semesterduration = $semesterstart->diff($semesterend);
-  $semesterdurationdays = $semesterduration->format("%r%a");
-  $today = new DateTime("now");
-  $fromsemesterstart = $semesterstart->diff($today);
-  //saime aja erinevuse objektina, seda niisama näidata ei saa
-  $fromsemesterstartdays = $fromsemesterstart->format("%r%a");
-  $semesterpercentage = 0;
-    
-  $semesterinfo = "Semester kulgeb vastavalt akadeemilisele kalendrile.";
-  if($semesterstart > $today){
-	  $semesterinfo = "Semester pole veel peale alanud";
-  }
-  if($fromsemesterstartdays === 0){
-	  $semesterinfo = "Semester algab täna";
-  }
-  if($fromsemesterstartdays > 0 and $fromsemesterstartdays < $semesterdurationdays){
-	  $semesterpercentage = ($fromsemesterstartdays / $semesterdurationdays) * 100;
-	  $semesterinfo = "Semester on momendil käimas " .$fromsemesterstartdays ." päeva on semestirst läbitud " .$semesterpercentage ."%.";
-  }
-  if($fromsemesterstartdays == $semesterdurationdays){
-	  $semesterinfo = "Semester lõppeb täna";
-  }
-  if($fromsemesterstartdays > $semesterdurationdays){
-	  $semesterinfo = "Semester on lõppenud";
-  }
-  
-  //loen kataloogist piltide nimekirja
-  //$allfiles = scandir("../vp_pics/");
-  $allfiles = array_slice(scandir("../vp_pics/"), 2);
-  //echo $allfiles;  //massiivi nii näidata ei saa!!!
-  //var_dump($allfiles);
-  //$allpicfiles = array_slice($allfiles, 2);
-  //var_dump($allpicfiles);
-  $allpicfiles = [];
-  $picfiletypes = ["image/jpeg", "image/png"];
-  //käin kogu massiivi läbi ja kontrollin iga üksikut elementi, kas on sobiv fail ehk pilt
-  foreach ($allfiles as $file){
-	  $fileinfo = getImagesize("../vp_pics/" .$file);
-	  if(in_array($fileinfo["mime"], $picfiletypes) == true){
-		  array_push($allpicfiles, $file);
-	  }
-  }
-  
-  //paneme kõik pildid järjest ekraanile
-  //uurime, mitu pilti on ehk mitu faili on nimekirjas - massiivis
-  $piccount = count($allpicfiles);
-  //echo $piccount;
-  //$i = $i + 1;
-  //$i += 1;
-  //$i ++;
-  $imghtml = "";
-  for($i = 0; $i < $piccount; $i ++){
-	  //<img src="../img/vp_banner.png" alt="alt tekst">
-	  $imghtml .= '<img src="../vp_pics/' .$allpicfiles[$i] .'" ';
-	  $imghtml .= 'alt="Tallinna Ülikool">';
-  }
+//vaatame semestri kulgemist
+$semesterstart = new DateTime("2020-8-31");
+$semesterend = new DateTime("2020-12-13");
+//selgitame välja nende vahe ehk erinevuse
+$semesterduration = $semesterstart->diff($semesterend);
+//leiame selle päevade arvuna
+$semesterdurationdays = $semesterduration->format("%r%a");
 
-  require("header.php");
+  
+//tänane päev
+$today = new DateTime("now");
+$semestercurrent = $semesterstart->diff($today);
+$semestercurrentdays = $semestercurrent->format("%r%a");
+if($semestercurrent < 0) {
+	$semestercurrentdays = "Semester pole peale alanud";
+}	
+if($semestercurrent > $semesterduration) {
+    $semestercurrentdays = "Semester on läbi saanud.";	
+}
+//if($fromsemesterstartdays < 0) (semester pole peale hakanud) 
+//leiame erinevuse tänasega (semesterduration jne)
+$completion = ($semestercurrent / $semesterduration) * 100
+if($completion = 0){
+	$showcompletion = "Semester pole veel alanud";
+}
+if($completion >= 100) {
+	$showcompletion = "Semester on läbi! 100";
+}	
 ?>
+<!DOCTYPE html>
+<html lang="et">
+<head>
+  <meta charset="utf-8">
+  <title><?php echo $username; ?> asutatud aastal 2001</title>
 
-  <img src="../img/vp_banner.png" alt="Veebiprogrammeerimise kursuse bänner">
-  <h1><?php echo $username; ?> programmeerib veebi</h1>
+</head>
+<body>
+  <h1><?php echo $username; ?></h1>
   <p>See veebileht on loodud õppetöö käigus ning ei sisalda mingit tõsiseltvõetavat sisu!</p>
-  <p>Leht on loodud veebiprogrammeerimise kursusel <a href="http://www.tlu.ee">Tallinna Ülikooli</a> Digitehnoloogiate instituudis.</p>
-  <p>Lehe avamise aeg: <?php echo $weekdaynameset[$weekdaynow - 1] .", " .$fulltimenow; ?>. 
-  <?php echo "Parajasti on " .$partofday ."."; ?></p>
-  <p><?php echo $semesterinfo; ?></p>
-  <hr>
-  <?php echo $imghtml; ?>
-  <hr>
-  <form method="POST">
-    <label>Sisesta oma tänane mõttetu mõte!</label>
-	<input type="text" name="nonsens" placeholder="mõttekoht">
-	<input type="submit" value="Saada ära!" name="submitnonsens">
-  </form>
-  <hr>
-  <?php echo $nonsenshtml; ?>
+<p>Leht on loodud veebiprogrammeerimise kurusse raames <a href="http://www.tlu.ee">Tallinna Ülikooli</a> Digitehnoloogiate instituudis ning mulle meeldib dabi visata
+<p>Kui sa seda loed, siis tea, et p��sesin ligi oma webi failile ilma oma kodust ega mugavustest lahkumata! Lisaks tahaks veel �elda, et sinul kui lugejal l�heb h�sti! See tekst ka �htlasi t�hendab, et sain oma koduse �lesandega hakkama! K�ige l�puks mainin, et Alu Kuningriik on k�ige v�imsaim!!!</p>
+<p>Lehe avamise hetkel oli: <?php echo $fulltimenow; ?>. </p>
+<p><?php echo "Parajasti on " .$partofday ."."; ?></p>
+<p><?php echo "Esimene semester kestab " .$semesterdurationdays ."päeva."; ?></p>
+<p><?php echo "Möödunud päevad pärast semestri algust: " .$semestercurrentdays ."."; ?></p>
+<p><?php echo "Teie õppetöö läbitud: " .$showcompletion ."%"; ?></p>
+
 </body>
 </html>
